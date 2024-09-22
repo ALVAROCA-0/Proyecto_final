@@ -1,48 +1,81 @@
+//python extension
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <stdlib.h>
-#include <io.h>
+#include "structmember.h"
 
-extern int errno;
+//Array libs
+#include <stdlib.h>
+#include <errno.h>
 
 typedef struct {
-    PyObject_HEAD
+    PyObject_VAR_HEAD
     PyObject** arr;
     long long length;
 } Array;
 
-static void Array_dealloc(Array* self) {
-    for (int i = 0; i < self->length; i++) {
-        Py_XDECREF(self->arr[i]);
-    }
-    free(self->arr);
-    self->arr = NULL;
-    if (errno) {
-        PyErr_SetFromErrno(PyExc_MemoryError);
-    }
-    Py_TYPE(self)->tp_free((PyObject *) self);
-}
-
-static int Array_init(Array *self, PyObject *args, PyObject *kwds) {
+static PyObject* Array_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
+    Array* self;
     long long l;
     if (!PyArg_ParseTuple(args, "L", &l)) {
         PyErr_BadArgument();
-        return -1;
+        l = 0;
     }
     if (l < 0) {
-        PyErr_SetString(PyExc_ValueError, "Target length must be a positive integer");
-        return -1;
+        PyErr_SetString(PyExc_ValueError, "El valor length debe ser un entero positivo");
+        l = 0;
     }
-    self->arr = (PyObject**) malloc((size_t)l*sizeof(PyObject*));
-    if (!self->arr) {
-        PyErr_SetFromErrno(PyExc_MemoryError);
-        return -1;
+    self  = (Array *) type->tp_alloc(type, 0);
+    if (self) {
+        self->arr = (PyObject*)malloc(type->tp_itemsize*l);
+        self->length = l;
+        Py_SET_SIZE(self, l);
     }
-    self->length = l;
-    for (int i = 0; i < l; i++) {
+    return self;
+}
+
+static int Array_init(Array *self, PyObject *args, PyObject *kwds) {
+    for (int i = 0; i < self->length; i++) {
         self->arr[i] = NULL;
     }
     return 0;
 }
+
+static int Array_traverse(Array *self, visitproc visit, void *arg) {
+    if (self->length > 0 && self->arr) {
+        for (int i = 0; i < self->length; i++) {
+            Py_VISIT(self->arr[i]);
+        }
+    }
+    return 0;
+}
+
+static int Array_clear(Array* self) {
+    if (self->length > 0 && self->arr) {
+        for (int i = 0; i < self->length; i++) {
+            Py_CLEAR(self->arr[i]);
+        }
+    }
+    return 0;
+}
+
+static void Array_finalize(Array* self) {
+    PyObject *err_type, *err_value, *err_traceback;
+    PyErr_Fetch(&err_type, &err_value, &err_traceback);
+    Array_clear(self);
+    free(self->arr);
+    self->arr = NULL;
+    PyErr_Restore(err_type, err_value, err_traceback);
+}
+
+static void Array_dealloc(Array* self) {
+    PyObject_GC_UnTrack(self);
+    PyObject *err_type, *err_value, *err_traceback;
+    PyErr_Fetch(&err_type, &err_value, &err_traceback);
+    Py_SET_SIZE(self, 0);
+    PyErr_Restore(err_type, err_value, err_traceback);
+    Py_TYPE(self)->tp_free((PyObject *) self);
+}
+
 
 PyObject* ArrayGet(Array *self, PyObject * args) {
     long long index;
@@ -51,11 +84,11 @@ PyObject* ArrayGet(Array *self, PyObject * args) {
         return NULL;
     }
     if (index < 0) {
-        PyErr_SetString(PyExc_ValueError, "Target index must be equal or bigger than 0");
+        PyErr_SetString(PyExc_ValueError, "Indice debe ser un entero positivo");
         return NULL;
     }
     if (index >= self->length) {
-        PyErr_SetString(PyExc_ValueError, "Target index must be less than array length");
+        PyErr_SetString(PyExc_ValueError, "Indice debe ser menor al largo del Array");
         return NULL;
     }
     return self->arr[index];
@@ -63,11 +96,11 @@ PyObject* ArrayGet(Array *self, PyObject * args) {
 
 PyObject* Array_Get_(Array *self, Py_ssize_t i) {
     if (i < 0) {
-        PyErr_SetString(PyExc_ValueError, "Target index must be equal or bigger than 0");
+        PyErr_SetString(PyExc_ValueError, "Indice debe ser un entero positivo");
         return NULL;
     }
     if (i >= self->length) {
-        PyErr_SetString(PyExc_ValueError, "Target index must be less than array length");
+        PyErr_SetString(PyExc_ValueError, "Indice debe ser menor al largo del Array");
         return NULL;
     }
     return self->arr[i];
@@ -81,11 +114,11 @@ PyObject* ArraySet(Array *self, PyObject * args) {
         return NULL;
     }
     if (index < 0) {
-        PyErr_SetString(PyExc_ValueError, "Target index must be equal or bigger than 0");
+        PyErr_SetString(PyExc_ValueError, "Indice debe ser un entero positivo");
         return NULL;
     }
     if (index >= self->length) {
-        PyErr_SetString(PyExc_ValueError, "Target index must be less than array length");
+        PyErr_SetString(PyExc_ValueError, "Indice debe ser menor al largo del Array");
         return NULL;
     }
     if (new_object) {
@@ -100,11 +133,11 @@ PyObject* ArraySet(Array *self, PyObject * args) {
 int Array_Set_(Array *self, Py_ssize_t i, PyObject * v) {
     PyObject *temp;
     if (i < 0) {
-        PyErr_SetString(PyExc_ValueError, "Target index must be equal or bigger than 0");
+        PyErr_SetString(PyExc_ValueError, "Indice debe ser un entero positivo");
         return -1;
     }
     if (i >= self->length) {
-        PyErr_SetString(PyExc_ValueError, "Target index must be less than array length");
+        PyErr_SetString(PyExc_ValueError, "Indice debe ser menor al largo del Array");
         return -1;
     }
     if (v) {
@@ -114,21 +147,6 @@ int Array_Set_(Array *self, Py_ssize_t i, PyObject * v) {
         Py_XDECREF(temp);
     }
     return 0;
-}
-
-int Array_del_(Array *self, Py_ssize_t i) {
-    if (i < 0) {
-        PyErr_SetString(PyExc_ValueError, "Target index must be equal or bigger than 0");
-        return -1;
-    }
-    if (i >= self->length) {
-        PyErr_SetString(PyExc_ValueError, "Target index must be less than array length");
-        return -1;
-    }
-    PyObject *temp = self->arr[i];
-    self->arr[i] = NULL;
-    Py_XDECREF(temp);
-
 }
 
 Py_ssize_t ArrayLen(Array *self) {
@@ -142,31 +160,32 @@ static PySequenceMethods ArraySeqMet = {
 };
 
 static PyMethodDef ArrayMethods[] = {
-    {"get", (PyCFunction) ArrayGet, METH_FASTCALL, "Returns item at index"},
-    {"set", (PyCFunction) ArraySet, METH_FASTCALL, "Sets item at index"},
-    {"__getitem__", (PyCFunction) ArrayGet, METH_FASTCALL, "Returns item at index"},
-    {"__setitem__", (PyCFunction) ArrayGet, METH_FASTCALL, "Sets item at index"},
+    {"get", (PyCFunction) ArrayGet, METH_FASTCALL, "Retorna el item en el indice"},
+    {"set", (PyCFunction) ArraySet, METH_FASTCALL, "Cambia el valor en el indice"},
     {NULL, NULL, 0, NULL}
 };
 
 static PyTypeObject ArrayType = {
-    .ob_base = PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "Array.Array",
-    .tp_doc = PyDoc_STR("Array class"),
-    .tp_basicsize = sizeof(Array),
-    .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_new = PyType_GenericNew,
-    .tp_dealloc = (destructor) Array_dealloc,
-    .tp_init = (initproc) Array_init,
-    .tp_methods = ArrayMethods,
-    .tp_as_sequence = &ArraySeqMet
+    .ob_base         = PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name         = "Array.Array",
+    .tp_doc          = PyDoc_STR("Array class"),
+    .tp_basicsize    = sizeof(Array),
+    .tp_itemsize     = sizeof(PyObject*),
+    .tp_flags        = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_new          = (newfunc)Array_new,
+    .tp_init         = (initproc) Array_init,
+    .tp_dealloc      = (destructor) Array_dealloc,
+    .tp_finalize     = (destructor) Array_finalize,
+    .tp_traverse     = (traverseproc) Array_traverse,
+    .tp_clear        = (inquiry) Array_clear,
+    .tp_methods      = ArrayMethods,
+    .tp_as_sequence  = &ArraySeqMet,
 };
 
 static PyModuleDef arrayModule = {
     .m_base = PyModuleDef_HEAD_INIT,
     .m_name = "Array",
-    .m_doc = PyDoc_STR("array module. Contains an extention type"),
+    .m_doc = PyDoc_STR("modulo array. Contiene la clase Array"),
     .m_size = -1
 };
 

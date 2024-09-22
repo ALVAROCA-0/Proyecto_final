@@ -1,10 +1,5 @@
-#Esto se requiere para importar array
-from sys import path as s_path
-from os.path import dirname, abspath, join as d_join
-s_path.append(d_join(dirname(abspath(__file__)), "Array"))
-
 #va a molestar pero realmente no es un problema
-from Array import Array
+from Array.Array import Array
 
 from typing import TypeVar, overload
 from collections.abc import Iterator, Iterable
@@ -140,6 +135,4 @@ class ArrayList(Iterable[T]):
         def copy(self) -> Iterator[T]:
             return ArrayList.__iterator__(self.arr, self.size, self.index)
 
-if __name__ == "__main__":
-    l: ArrayList[str] = ArrayList("hola", 1, 10)
-    print(l[0:1])
+    

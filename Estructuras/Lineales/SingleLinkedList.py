@@ -162,7 +162,3 @@ class SingleLinkedList(Iterable[T]):
             return ret
         def copy(self) -> Iterator[T]:
             return SingleLinkedList.__iterator__(self.__node__)
-
-if __name__ == "__main__":
-    l = SingleLinkedList(1,2,3,4,5,6)
-    print(l[4:2:-1])

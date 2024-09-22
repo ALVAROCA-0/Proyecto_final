@@ -1,3 +1,5 @@
 .vscode/settings.json
 Estructuras/Lineales/Array/build
 Estructuras/Lineales/Array/Array.pyd
+*__pycache__/
+*tempCodeRunnerFile.py
