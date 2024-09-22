@@ -22,7 +22,9 @@ Para compilar codigo usando Array se debe:
 3. El editor no encuentra el archivo, pero ya esta importada la clase Array
 
 ### Sub-Paquete NoLineales:
-**TODO: estructuras no lineales**
+se encuentras los siguientes modulos:
+* ArbolBinario
+* ArbolAVL
 
 ### Sub-Paquete Otros:
 **TODO: estructuras sin categoria**
