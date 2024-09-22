@@ -1,6 +1,6 @@
 # Proyecto final de Estructuras de Datos 2024-1
 Juego tower defense creado por Nicolas Pajaro y Álvaro Romero
-## Paquete Lineales:
+## Paquete Estructuras:
 Paquete que contiene todas las estructuras a ser usadas
 Contiene los sub-paquetes: Lineales, NoLineales, y Otras.
 
