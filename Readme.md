@@ -10,7 +10,9 @@ se encuentran los siguientes modulos:
 * ArrayList
 
 ### Sub-Paquete NoLineales:
-**TODO: estructuras no lineales**
+se encuentras los siguientes modulos:
+* ArbolBinario
+* ArbolAVL
 
 ### Sub-Paquete Otros:
 **TODO: estructuras sin categoria**
