@@ -16,11 +16,11 @@ class SingleLinkedList(Iterable[T]):
     @overload
     def __init__(self, values: Iterable[T]) -> None: ...
     @overload
-    def __init__(self, value1: T, *values: T) -> None: ...
+    def __init__(self, value1: T, value2: T, *values: T) -> None: ...
     def __init__(self, itr: Iterator[T] | Iterable[T] | T | None = None, *values: T) -> None:
-        self.__size__: int = 0
-        self.__head__: SLLNode[T] = None
-        self.__tail__: SLLNode[T] = None
+        self.__size: int = 0
+        self.__head: SLLNode[T] = None
+        self.__tail: SLLNode[T] = None
         if values:
             #asume itr es un valor tipo T y el primer valor
             self.push_back(itr)
@@ -37,73 +37,77 @@ class SingleLinkedList(Iterable[T]):
                 self.push_back(itr)
 
     def add(self, index: int, value: T) -> None:
-        if index < 0 or index > self.__size__:
+        if index < 0 or index > self.__size:
             raise IndexError("Indice fuera de la lista")
         if index == 0:
-            self.__head__ = SLLNode(value, self.__head__)
-            if self.__size__ == 0:
-                self.__tail__ = self.__head__
-        elif index == self.__size__:
-            self.__tail__.next = SLLNode(value)
-            self.__tail__ = self.__tail__.next
+            self.__head = SLLNode(value, self.__head)
+            if self.__size == 0:
+                self.__tail = self.__head
+        elif index == self.__size:
+            self.__tail.next = SLLNode(value)
+            self.__tail = self.__tail.next
         else:
             i: int = 0
-            current_Node: SLLNode[T] = self.__head__
+            current_Node: SLLNode[T] = self.__head
             while i < index - 1:
                 current_Node = current_Node.next
                 i += 1
             current_Node.next = SLLNode(value, current_Node.next)
-        self.__size__ += 1
+        self.__size += 1
 
     def push(self, value: T):
         self.add(0, value)
 
     def push_back(self, value: T):
-        self.add(self.__size__, value)
+        self.add(self.__size, value)
 
     def remove(self, index: int) -> T:
-        if index < 0 or index >= self.__size__:
+        if index < 0 or index >= self.__size:
             raise IndexError("Indice fuera de la lista")
         ret: T
         if index == 0:
-            ret = self.__head__.value
-            self.__head__ = self.__head__.next
+            ret = self.__head.value
+            self.__head = self.__head.next
         else:
             i: int = 0
-            current_Node: SLLNode[T] = self.__head__
+            current_Node: SLLNode[T] = self.__head
             while i < index - 1:
                 current_Node = current_Node.next
                 i += 1
-            if index == self.__size__-1:
-                self.__tail__ = current_Node
+            if index == self.__size-1:
+                self.__tail = current_Node
             ret = current_Node.next.value
             current_Node.next = current_Node.next.next
+        self.__size -= 1
         return ret
 
     def get(self, index: int) -> T:
-        if index < 0 or index >= self.__size__:
+        if index < 0 or index >= self.__size:
             raise IndexError("Indice fuera de la lista")
-        if index == self.__size__-1: return self.__tail__.value
+        if index == self.__size-1: return self.__tail.value
         i: int = 0
-        current_Node: SLLNode[T] = self.__head__
+        current_Node: SLLNode[T] = self.__head
         while i < index:
             current_Node = current_Node.next
             i += 1
         return current_Node.value
 
     def set(self, index: int, value: T) -> None:
-        if index < 0: index += self.__size__
-        if index >= self.__size__:
+        if index < 0: index += self.__size
+        if index >= self.__size:
             raise IndexError("Indice fuera de la lista")
-        if index == self.__size__-1: 
-            self.__tail__.value = value
+        if index == self.__size-1: 
+            self.__tail.value = value
         else:
             i: int = 0
-            current_Node: SLLNode[T] = self.__head__
+            current_Node: SLLNode[T] = self.__head
             while i < index:
                 current_Node = current_Node.next
                 i += 1
             current_Node.value = value
+    
+    def is_empty(self):
+        return self.__size == 0
     
     def copy(self):
         return SingleLinkedList(self)
@@ -115,7 +119,7 @@ class SingleLinkedList(Iterable[T]):
     def __getitem__(self, item: int | slice) -> T | Iterable[T]:
         if isinstance(item, slice):
             ret: SingleLinkedList[T] = SingleLinkedList()
-            index, end, step = item.indices(self.__size__)
+            index, end, step = item.indices(self.__size)
             add = ret.push_back
             #cambiar direccion ya que solo puede ir hacia adelante
             if step < 0:
@@ -144,14 +148,16 @@ class SingleLinkedList(Iterable[T]):
     def __setitem__(self, key, value):
         return self.set(key, value)
     def __len__(self):
-        return self.__size__
+        return self.__size
     def __iter__(self) -> Iterator[T]:
-        return self.__iterator__(self.__head__)
+        return self.__iterator(self.__head)
     def __str__(self):
         return "["+", ".join(repr(x) for x in self)+"]"
-    def __deliter__(self, key: int):
+    def __delitem__(self, key: int):
         self.remove(key)
-    class __iterator__(Iterator[T]):
+    def __bool__(self) -> bool:
+        return not self.is_empty()
+    class __iterator(Iterator[T]):
         def __init__(self, node: SLLNode) -> None:
             self.__node__: SLLNode[T] = node
         def __next__(self) -> T:
@@ -161,4 +167,4 @@ class SingleLinkedList(Iterable[T]):
             self.__node__ = self.__node__.next
             return ret
         def copy(self) -> Iterator[T]:
-            return SingleLinkedList.__iterator__(self.__node__)
+            return SingleLinkedList.__iterator(self.__node__)

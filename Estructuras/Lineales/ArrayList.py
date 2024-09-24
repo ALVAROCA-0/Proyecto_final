@@ -16,8 +16,8 @@ class ArrayList(Iterable[T]):
     @overload
     def __init__(self, value1: T, *values: T) -> None: ...
     def __init__(self, itr: Iterator[T] | Iterable[T] | T |  None = None, *values: T) -> None:
-        self.__arr__: Array = Array(2)
-        self.__size__ = 0
+        self.__arr: Array = Array(2)
+        self.__size = 0
         if values:
             #asume itr es un valor tipo T y el primer valor
             self.push_back(itr)
@@ -36,66 +36,69 @@ class ArrayList(Iterable[T]):
     def add(self, index: int, value: T):
         if not isinstance(index, int):
             raise TypeError("Los indices deben ser enteros")
-        if index < 0: index = self.__size__ + index
-        if 0 > index or index > self.__size__:
+        if index < 0: index = self.__size + index
+        if 0 > index or index > self.__size:
             raise IndexError("Indice fuera de la lista")
-        if len(self.__arr__) <= self.__size__: #extender array
-            temp: Array = Array(2*len(self.__arr__))
+        if len(self.__arr) <= self.__size: #extender array
+            temp: Array = Array(2*len(self.__arr))
             i:int = 0
             #copia todos los valores menores a index
             while i < index:
-                temp[i] = self.__arr__[i]
+                temp[i] = self.__arr[i]
                 i += 1
             #copia valores una posicion adelante para dar espacio en index
-            while i < self.__size__:
-                temp[i+1] = self.__arr__[i]
+            while i < self.__size:
+                temp[i+1] = self.__arr[i]
                 i += 1
-            del self.__arr__
-            self.__arr__ = temp
+            del self.__arr
+            self.__arr = temp
         else:
             #mueve valores mayores a index una posicion adelante para dar espacio en index
-            i: int = self.__size__
+            i: int = self.__size
             while i > index:
-                self.__arr__[i] = self.__arr__[i-1]
+                self.__arr[i] = self.__arr[i-1]
                 i -= 1
-        self.__arr__[index] = value
-        self.__size__ += 1
+        self.__arr[index] = value
+        self.__size += 1
     
     def push(self, value: T):
         self.add(0, value)
     def push_back(self, value: T):
-        self.add(self.__size__, value)
+        self.add(self.__size, value)
     
     def remove(self, index) -> T:
         if not isinstance(index, int):
             raise TypeError("Los indices deben ser enteros")
-        if index < 0: index = self.__size__ + index
-        if 0 > index or index >= self.__size__:
+        if index < 0: index = self.__size + index
+        if 0 > index or index >= self.__size:
             raise IndexError("Indice fuera de la lista")
         
-        ret: T = self.__arr__[index]
+        ret: T = self.__arr[index]
         #mueve valores una posicion atras desde index para quitar valor en index
         i:int = index
-        while i < self.__size__:
-            self.__arr__[i] = self.__arr__[i+1]
-        self.__size__ -= 1
+        while i < self.__size:
+            self.__arr[i] = self.__arr[i+1]
+        self.__size -= 1
         return ret
     
     def get(self, index: int) -> T:
         if not isinstance(index, int):
             raise TypeError("Los indices deben ser enteros")
-        if index < 0: index = self.__size__ + index
-        if 0 > index or index >= self.__size__:
+        if index < 0: index = self.__size + index
+        if 0 > index or index >= self.__size:
             raise IndexError("Indice fuera de la lista")
-        return self.__arr__[index]
+        return self.__arr[index]
     
     def set(self, index: int, value: T) -> None:
         if not isinstance(index, int):
             raise TypeError("Los indices deben ser enteros")
-        if index < 0: index = self.__size__ + index
-        if 0 > index or index >= self.__size__:
+        if index < 0: index = self.__size + index
+        if 0 > index or index >= self.__size:
             raise IndexError("Indice fuera de la lista")
-        self.__arr__[index] = value
+        self.__arr[index] = value
+    
+    def is_empty(self):
+        return self.__size == 0
     
     def copy(self) -> Iterable[T]:
         return ArrayList(self)
@@ -108,7 +111,7 @@ class ArrayList(Iterable[T]):
         if isinstance(key, int):
             return self.get(key)
         elif isinstance(key, slice):
-            start, end, step = key.indices(self.__size__)
+            start, end, step = key.indices(self.__size)
             ret: ArrayList = ArrayList(self.get(index) for index in range(start, end, step))
             return ret
         else:
@@ -120,8 +123,10 @@ class ArrayList(Iterable[T]):
     def __str__(self):
         return "("+", ".join(repr(x) for x in self)+")"
     def __iter__(self) -> Iterator[T]:
-        return self.__iterator__(self.__arr__, self.__size__)
-    class __iterator__(Iterator[T]):
+        return self.__iterator(self.__arr, self.__size)
+    def __bool__(self) -> bool:
+        return self.is_empty()
+    class __iterator(Iterator[T]):
         def __init__(self, arr: Array, size: int, start:int = 0) -> None:
             self.arr:Array = arr
             self.index: int = start
@@ -133,6 +138,4 @@ class ArrayList(Iterable[T]):
             self.index += 1
             return ret
         def copy(self) -> Iterator[T]:
-            return ArrayList.__iterator__(self.arr, self.size, self.index)
-
-    
+            return ArrayList.__iterator(self.arr, self.size, self.index)
