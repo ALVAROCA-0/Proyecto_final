@@ -1,2 +1,2 @@
 __all__ = ["Lineales", "NoLineales", "Otras"]
-from . import *
+from . import Lineales, NoLineales, Otras

@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from SingleLinkedList import SingleLinkedList as SLList
+from .SingleLinkedList import SingleLinkedList as SLList
 from typing import TypeVar, overload
 
 T = TypeVar("T")

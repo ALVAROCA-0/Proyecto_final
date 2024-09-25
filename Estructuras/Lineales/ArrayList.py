@@ -1,5 +1,5 @@
 #va a molestar pero realmente no es un problema
-from Array.Array import Array
+from .Array.Array import Array
 
 from typing import TypeVar, overload
 from collections.abc import Iterator, Iterable
