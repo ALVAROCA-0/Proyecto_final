@@ -16,7 +16,7 @@ class ArrayList(Iterable[T]):
     @overload
     def __init__(self, value1: T, *values: T) -> None: ...
     def __init__(self, itr: Iterator[T] | Iterable[T] | T |  None = None, *values: T) -> None:
-        self.__arr: Array = Array(2)
+        self.__arr: Array[T] = Array(2)
         self.__size = 0
         if values:
             #asume itr es un valor tipo T y el primer valor
@@ -40,7 +40,7 @@ class ArrayList(Iterable[T]):
         if 0 > index or index > self.__size:
             raise IndexError("Indice fuera de la lista")
         if len(self.__arr) <= self.__size: #extender array
-            temp: Array = Array(2*len(self.__arr))
+            temp: Array[T] = Array(2*len(self.__arr))
             i:int = 0
             #copia todos los valores menores a index
             while i < index:
@@ -128,7 +128,7 @@ class ArrayList(Iterable[T]):
         return self.is_empty()
     class __iterator(Iterator[T]):
         def __init__(self, arr: Array, size: int, start:int = 0) -> None:
-            self.arr:Array = arr
+            self.arr:Array[T] = arr
             self.index: int = start
             self.size: int = size
         def __next__(self) -> T:
@@ -137,5 +137,9 @@ class ArrayList(Iterable[T]):
             ret:T = self.arr[self.index]
             self.index += 1
             return ret
+        def set(self, value: T) -> None:
+            self.arr[self.index] = value
+        def get(self) -> T:
+            return self.arr[self.index]
         def copy(self) -> Iterator[T]:
             return ArrayList.__iterator(self.arr, self.size, self.index)

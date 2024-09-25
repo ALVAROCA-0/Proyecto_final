@@ -159,12 +159,16 @@ class SingleLinkedList(Iterable[T]):
         return not self.is_empty()
     class __iterator(Iterator[T]):
         def __init__(self, node: SLLNode) -> None:
-            self.__node__: SLLNode[T] = node
+            self.__node: SLLNode[T] = node
         def __next__(self) -> T:
-            if self.__node__ == None:
+            if self.__node == None:
                 raise StopIteration("Final alcanzado")
-            ret: T =  self.__node__.value
-            self.__node__ = self.__node__.next
+            ret: T =  self.__node.value
+            self.__node = self.__node.next
             return ret
+        def set(self, value: T) -> None:
+            self.__node.value = value
+        def get(self) -> T:
+            return self.__node.value
         def copy(self) -> Iterator[T]:
-            return SingleLinkedList.__iterator(self.__node__)
+            return SingleLinkedList.__iterator(self.__node)
