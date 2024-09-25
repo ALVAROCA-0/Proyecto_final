@@ -5,7 +5,6 @@
 
 //Array libs
 #include <stdlib.h>
-#include <errno.h>
 
 typedef struct {
     PyObject_VAR_HEAD
@@ -91,6 +90,7 @@ PyObject* ArrayGet(Array *self, PyObject * args) {
         PyErr_SetString(PyExc_ValueError, "Indice debe ser menor al largo del Array");
         return NULL;
     }
+    Py_INCREF(self->arr[index]);
     return self->arr[index];
 }
 
@@ -103,6 +103,7 @@ PyObject* Array_Get_(Array *self, Py_ssize_t i) {
         PyErr_SetString(PyExc_ValueError, "Indice debe ser menor al largo del Array");
         return NULL;
     }
+    Py_INCREF(self->arr[i]);
     return self->arr[i];
 }
 
