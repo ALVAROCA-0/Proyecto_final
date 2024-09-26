@@ -1,4 +1,5 @@
 from typing import Generic, TypeVar, overload
+from .Array.Array import Array
 from collections.abc import Iterator, Iterable
 
 T = TypeVar("T")
@@ -151,8 +152,38 @@ class SingleLinkedList(Iterable[T]):
         return self.__size
     def __iter__(self) -> Iterator[T]:
         return self.__iterator(self.__head)
-    def __str__(self):
-        return "["+", ".join(repr(x) for x in self)+"]"
+    def __str__(self, map: Array = None):
+        hsh = lambda x: id(x)%29
+        if not map:
+            map = Array(29)
+            for i in range(29): map[i] = SingleLinkedList()
+            map[hsh(self)].push_back(id(self))
+        ret = "["
+        first = True
+        for x in self:
+            if isinstance(x, Iterable):
+                inside: bool = False
+                l: SingleLinkedList[int] = map[hsh(x)]
+                if not first: ret += ", "
+                else: first = False
+                for val in l:
+                    if val == id(x):
+                        inside = True
+                        break
+                if inside:
+                    ret += repr(x)
+                else:
+                    l.push(id(x))
+                    ret += x.__str__(map)
+                    l.remove(0)
+            else:
+                if not first: ret += ", "
+                else: first = False
+                ret += repr(x)
+        ret += "]"
+        return ret
+    def __repr__(self) -> str:
+        return f"<SingleLinkedList object at 0x{id(self):016x}>"
     def __delitem__(self, key: int):
         self.remove(key)
     def __bool__(self) -> bool:
