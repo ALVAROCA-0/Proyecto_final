@@ -34,7 +34,7 @@ static PyObject* Array_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
 
 static int Array_init(Array *self, PyObject *args, PyObject *kwds) {
     for (int i = 0; i < self->length; i++) {
-        self->arr[i] = NULL;
+        self->arr[i] = Py_None;
     }
     return 0;
 }
