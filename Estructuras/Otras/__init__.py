@@ -1,2 +1,3 @@
-__all__ = ["HashmapSeparateChaining"]
-from .Hashmap import HashmapSeparateChaining
+__all__ = ["HashmapSeparateChaining", "HashmapProbing"]
+from .HashmapSeparateChaining import HashmapSeparateChaining
+from .HashmapProbing import HashmapProbing

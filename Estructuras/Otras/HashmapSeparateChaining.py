@@ -1,22 +1,8 @@
 from ..Lineales import Array, SingleLinkedList as SLL
-from typing import TypeVar, Generic
-from collections.abc import Iterator
+from collections.abc import Iterable
+from .pair import *
 
-KT = TypeVar("KT")
-VT = TypeVar("VT")
-
-class pair(Generic[KT, VT]):
-    def __init__(self, key: KT, value: VT) -> None:
-        self.key: KT = key
-        self.value: VT = value
-    def __str__(self) -> str:
-        return f"{self.key!r}:{self.value!r}"
-    def __iter__(self) -> Iterator[KT|VT]:
-        yield self.key
-        yield self.value
-        return
-
-class HashmapSeparateChaining(Generic[KT, VT]):
+class HashmapSeparateChaining(Iterable[KT, VT]):
     def __init__(self, buckets: int = 29) -> None:
         if buckets < 2: raise ValueError("Buckets debe ser un entero positivo")
         self.__size = 0
@@ -60,6 +46,7 @@ class HashmapSeparateChaining(Generic[KT, VT]):
         for i in range(past_buckets):
             for p in self.arr[i]:
                 temp[self.__hash_func(p.key)].push_back(p.value)
+        self.arr = temp
     def keys(self) -> Iterator[KT]:
         for i in range(self.buckets):
             for p in self.arr[i]:
