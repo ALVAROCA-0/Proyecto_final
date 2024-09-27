@@ -161,7 +161,7 @@ class SingleLinkedList(Iterable[T]):
         ret = "["
         first = True
         for x in self:
-            if isinstance(x, Iterable):
+            if isinstance(x, SingleLinkedList):
                 inside: bool = False
                 l: SingleLinkedList[int] = map[hsh(x)]
                 if not first: ret += ", "

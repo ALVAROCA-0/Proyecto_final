@@ -9,7 +9,7 @@ class pair(Generic[KT, VT]):
         self.key: KT = key
         self.value: VT = value
     def __str__(self) -> str:
-        return f"{self.key!r}:{self.value!r}"
+        return f"{self.key!r}: {self.value!r}"
     def __iter__(self) -> Iterator[KT|VT]:
         yield self.key
         yield self.value

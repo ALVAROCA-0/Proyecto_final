@@ -20,13 +20,13 @@ class HashmapProbing(Iterable[KT]):
             i += 1
             pos = self.__hash_func(key, i)
             val = self.arr[pos]
-            if i >= self.buckets: raise MemoryError(f"No se ha encontrado la llave despues de {i} intentos")
+            if i >= self.buckets: raise MemoryError(f"No se ha encontrado espacio de {i} intentos")
         if val != None:
             val.value = value
         else:
             self.arr[pos] = pair(key, value)
         self.__size += 1
-    def search(self, key: KT) -> VT:
+    def search(self, key: KT, default: VT = None) -> VT:
         i: int = 0
         pos:int = self.__hash_func(key)
         val: None|pair[KT,VT] = self.arr[pos]
@@ -34,8 +34,9 @@ class HashmapProbing(Iterable[KT]):
             i += 1
             pos = self.__hash_func(key, i)
             val = self.arr[pos]
-            if i >= self.buckets: raise KeyError(f"No se ha encontrado la llave despues de {i} intentos")
-        return val.value
+            if i >= self.buckets: break
+        if val.key == key: return val.value
+        return default
     def remove(self, key: KT) -> VT:
         i: int = 0
         pos:int = self.__hash_func(key)
@@ -80,10 +81,10 @@ class HashmapProbing(Iterable[KT]):
     def __str__(self) -> str:
         return "{"+", ".join(self.items()) + "}"
     def __getitem__(self, key: KT) -> VT:
-        return self.search(KT)
+        return self.search(key)
     def __setitem__(self, key: KT, value: VT) -> None:
         self.insert(key, value)
     def __delitem__(self, key: KT) -> None:
-        self.remove[key]
+        self.remove(key)
     def __iter__(self) -> Iterator[KT]:
         return self.keys()

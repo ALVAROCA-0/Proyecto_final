@@ -23,12 +23,12 @@ class HashmapSeparateChaining(Iterable[KT, VT]):
         if not inside:
             l.push_back(pair(key, value))
         self.__size += 1
-    def search(self, key: KT) -> VT:
+    def search(self, key: KT, default: VT = None) -> VT:
         l = self.arr[self.__hash_func(key)]
         for p in l:
             if p.key == key:
                 return p.value
-        raise KeyError("Llave no encontrada")
+        return default
     def remove(self, key: KT) -> VT:
         l = self.arr[self.__hash_func(key)]
         for i, p in enumerate(l):
@@ -63,12 +63,14 @@ class HashmapSeparateChaining(Iterable[KT, VT]):
                 yield p
         return
     def __str__(self) -> str:
-        return "{"+", ".join(self.items()) + "}"
+        return "{"+", ".join(map(str, self.items())) + "}"
     def __getitem__(self, key: KT) -> VT:
-        return self.search(KT)
+        return self.search(key)
     def __setitem__(self, key: KT, value: VT) -> None:
         self.insert(key, value)
     def __delitem__(self, key: KT) -> None:
-        self.remove[key]
+        self.remove(key)
     def __iter__(self) -> Iterator[KT]:
         return self.keys()
+    def __bool__(self) -> bool:
+        return self.__size > 0
