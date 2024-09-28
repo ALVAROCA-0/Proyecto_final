@@ -1,7 +1,7 @@
 FILAS = 20
 COLUMNAS = 20
 TAMAÑO_PIXEL = 32
-vertices = [
+vertices = SLL[
     (560,0),
     (560,112),
     (240,112),
