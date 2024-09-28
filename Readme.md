@@ -1,5 +1,11 @@
 # Proyecto final de Estructuras de Datos 2024-1
 Juego tower defense creado por Nicolas Pajaro y Álvaro Romero
+## Juego tower defense
+El archivo ejecutable es `main.py`, este a traves de los modulos dentro de la carpeta TowerDefense se encarga de el juego en si.
+
+### Carpeta TowerDefense:
+Contiene la carpeta Assets con texturas para los objetos de juego. Y tambien esta la carpeta Main_Game donde estan los modulos que permiten la ejecucion del juego
+
 ## Paquete Estructuras:
 Paquete que contiene todas las estructuras a ser usadas
 Contiene los sub-paquetes:
