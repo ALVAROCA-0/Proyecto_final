@@ -14,14 +14,16 @@ typedef struct {
 
 static PyObject* Array_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
     Array* self;
-    long long l;
-    if (!PyArg_ParseTuple(args, "L", &l)) {
-        PyErr_BadArgument();
-        l = 0;
-    }
-    if (l < 0) {
-        PyErr_SetString(PyExc_ValueError, "El valor length debe ser un entero positivo");
-        l = 0;
+    long long l = PyTuple_Size(args);
+    if (l < 2) {
+        if (!PyArg_ParseTuple(args, "L", &l)) {
+            PyErr_BadArgument();
+            l = 0;
+        }
+        if (l < 0) {
+            PyErr_SetString(PyExc_ValueError, "El valor length debe ser un entero positivo");
+            l = 0;
+        }
     }
     self  = (Array *) type->tp_alloc(type, 0);
     if (self) {
@@ -29,13 +31,13 @@ static PyObject* Array_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
         self->length = l;
         Py_SET_SIZE(self, l);
     }
-    return self;
+    return (PyObject*) self;
 }
 
 static int Array_init(Array *self, PyObject *args, PyObject *kwds) {
-    for (int i = 0; i < self->length; i++) {
-        self->arr[i] = Py_None;
-    }
+    short objects = PyTuple_Size(args) > 1;
+    if (objects) for (int i = 0; i < self->length; i++) self->arr[i] = PyTuple_GetItem(args, i);
+    else for (int i = 0; i < self->length; i++) self->arr[i] = Py_None;
     return 0;
 }
 
@@ -154,6 +156,36 @@ Py_ssize_t ArrayLen(Array *self) {
     return self->length;
 }
 
+typedef struct {
+    PyObject_HEAD
+    PyObject** head;
+    long long items;
+} ArrayIter;
+
+static int ArrayIter_init(ArrayIter *self, PyObject *args, PyObject *kwds)
+{
+    Array* Array = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &((PyObject*)Array)))
+        return -1;
+
+    self->head = Array->arr;
+    self->items = Array->length;
+    return 0;
+}
+
+PyObject* ArrayIter_next(ArrayIter* self) {
+    if (self->items == 0) {
+        PyErr_SetString(PyExc_StopIteration, "Final alcanzado");
+        return NULL;
+    }
+    PyObject* ret = *self->head;
+    self->head += 1;
+    self->items -= 1;
+    Py_INCREF(ret);
+    return ret;
+}
+
 static PySequenceMethods ArraySeqMet = {
     .sq_length = (lenfunc) ArrayLen,
     .sq_item = (ssizeargfunc) Array_Get_,
@@ -163,6 +195,7 @@ static PySequenceMethods ArraySeqMet = {
 static PyMethodDef ArrayMethods[] = {
     {"get", (PyCFunction) ArrayGet, METH_FASTCALL, "Retorna el item en el indice"},
     {"set", (PyCFunction) ArraySet, METH_FASTCALL, "Cambia el valor en el indice"},
+    {"__class_getitem__", Py_GenericAlias, METH_O|METH_CLASS, "Array como generico"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -183,6 +216,49 @@ static PyTypeObject ArrayType = {
     .tp_as_sequence  = &ArraySeqMet,
 };
 
+static PyMethodDef ArrayIterMethods[] = {
+    {"__class_getitem__", Py_GenericAlias, METH_O|METH_CLASS, "ArrayIter como generico"},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyTypeObject ArrayIterType = {
+    .ob_base         = PyObject_HEAD_INIT(NULL)
+    .tp_name         = "Array.ArrayIter",
+    .tp_doc          = PyDoc_STR("Array iter"),
+    .tp_basicsize    = sizeof(ArrayIter),
+    .tp_itemsize     = 0,
+    .tp_flags        = Py_TPFLAGS_DEFAULT,
+    .tp_methods      = ArrayIterMethods,
+    .tp_iternext     = (iternextfunc) ArrayIter_next,
+    .tp_init         = (initproc) ArrayIter_init,
+    .tp_alloc        = PyType_GenericAlloc,
+    .tp_new          = PyType_GenericNew,
+};
+
+ArrayIter* Array_iter(Array* self) {
+    ArrayIter* iter = (ArrayIter*) ArrayIterType.tp_alloc(&ArrayIterType, 0);
+    if (!iter) {
+        PyErr_SetFromErrno(PyExc_MemoryError);
+        return NULL;
+    }
+    iter->head = self->arr;
+    iter->items = self->length;
+    Py_INCREF(iter);
+    return iter;
+}
+
+ArrayIter* ArrayIter_iter(ArrayIter* self) {
+    ArrayIter* iter = (ArrayIter*) ArrayIterType.tp_alloc(&ArrayIterType, 0);
+    if (!iter) {
+        PyErr_SetFromErrno(PyExc_MemoryError);
+        return NULL;
+    }
+    iter->head = self->head;
+    iter->items = self->items;
+    Py_INCREF(iter);
+    return iter;
+}
+
 static PyModuleDef arrayModule = {
     .m_base = PyModuleDef_HEAD_INIT,
     .m_name = "Array",
@@ -191,8 +267,12 @@ static PyModuleDef arrayModule = {
 };
 
 PyMODINIT_FUNC PyInit_Array(void) {
+    ArrayType.tp_iter = (getiterfunc) Array_iter;
+    ArrayIterType.tp_iter = (getiterfunc) ArrayIter_iter;
     PyObject *m;
     if (PyType_Ready(&ArrayType) < 0)
+        return NULL;
+    if (PyType_Ready(&ArrayIterType) < 0)
         return NULL;
     
     m = PyModule_Create(&arrayModule);
@@ -200,8 +280,13 @@ PyMODINIT_FUNC PyInit_Array(void) {
         return NULL;
     
     Py_INCREF(&ArrayType);
-    if (PyModule_AddObject(m, "Array", (PyObject *) &ArrayType) < 0) {
+    Py_INCREF(&ArrayIterType);
+    if (
+        PyModule_AddObject(m, "Array", (PyObject *) &ArrayType) < 0 || 
+        PyModule_AddObject(m, "ArrayIter", (PyObject *) &ArrayType) < 0
+    ) {
         Py_DECREF(&ArrayType);
+        Py_DECREF(&ArrayIterType);
         Py_DECREF(m);
         return NULL;
     }
