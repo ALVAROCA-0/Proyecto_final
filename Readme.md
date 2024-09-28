@@ -14,9 +14,12 @@ Contiene los sub-paquetes:
 * Otras.
 
 ### Sub-Paquete Lineales:
-se encuentran los siguientes modulos:
+Se encuentran los siguientes modulos:
 * SingleLinkedList
+* DoubleLinkedList
 * ArrayList
+* Queue
+* Stack
 
 Tambien se encuentra la carpeta Array que contiene:
 * Array.c
@@ -28,9 +31,11 @@ Para compilar codigo usando Array se debe:
 3. El editor no encuentra el archivo, pero ya esta importada la clase Array
 
 ### Sub-Paquete NoLineales:
-se encuentras los siguientes modulos:
+Se encuentras los siguientes modulos:
 * ArbolBinario
 * ArbolAVL
 
 ### Sub-Paquete Otros:
-**TODO: estructuras sin categoria**
+Se encuentras los siguientes modulos:
+* HashmapProbing.py
+* HashmapSeparateChaining.py

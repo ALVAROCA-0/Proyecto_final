@@ -5,16 +5,17 @@ from Estructuras.Lineales import Queue, SingleLinkedList as SLL
 from time import time
 
 class Enemigo(py.sprite.Sprite):
-    def __init__(self,vertices: SLL,imagen: py.Surface):
+    def __init__(self,vertices: SLL[tuple[int,int]], imagen: py.Surface):
         py.sprite.Sprite.__init__(self)
-        self.pos: Vector2 = Vector2(self.vertices.dequeue())
         #atributos para moverse
         self.vertices: Queue[tuple[int, int]] = Queue(vertices)
+        self.pos: Vector2 = Vector2(self.vertices.dequeue())
         self.target: Vector2 = Vector2(self.vertices.dequeue())
         self.direccion: Vector2 = self.target - self.pos
         self.velocidad: int = 100 #pixeles por segundo
-        self.angulo = 0
+        self.angulo: float = 0
         self.imagen_original = imagen
+        #atributos para dibujar el sprite
         self.image = py.transform.rotate(self.imagen_original,self.angulo)
         self.rect = self.image.get_rect()
         self.rect.center = self.pos

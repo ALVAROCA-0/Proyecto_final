@@ -1,8 +1,9 @@
 from ..Lineales import Array, SingleLinkedList as SLL
 from collections.abc import Iterable
+from typing import Generic
 from .pair import *
 
-class HashmapSeparateChaining(Iterable[KT, VT]):
+class HashmapSeparateChaining(Generic[KT, VT]):
     def __init__(self, buckets: int = 29) -> None:
         if buckets < 2: raise ValueError("Buckets debe ser un entero positivo")
         self.__size = 0

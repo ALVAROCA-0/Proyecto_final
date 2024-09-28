@@ -2,7 +2,7 @@ from .pair import *
 from collections.abc import Iterable
 from ..Lineales import Array
 
-class HashmapProbing(Iterable[KT]):
+class HashmapProbing(Generic[KT, VT]):
     def __init__(self, buckets: int = 29, quadratic: bool = False) -> None:
         self.buckets = buckets
         self.__size = 0
@@ -35,7 +35,7 @@ class HashmapProbing(Iterable[KT]):
             pos = self.__hash_func(key, i)
             val = self.arr[pos]
             if i >= self.buckets: break
-        if val.key == key: return val.value
+        if val and val.key == key: return val.value
         return default
     def remove(self, key: KT) -> VT:
         i: int = 0
