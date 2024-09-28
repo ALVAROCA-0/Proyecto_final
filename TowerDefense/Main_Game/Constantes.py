@@ -1,6 +1,7 @@
 FILAS = 20
 COLUMNAS = 20
 TAMAÑO_PIXEL = 32
+from Estructuras.Lineales import SingleLinkedList as SLL
 vertices = SLL[
     (560,0),
     (560,112),
