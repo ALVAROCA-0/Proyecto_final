@@ -1,68 +1,95 @@
-from typing import Any
 import pygame as py
-
-from . import Constantes as c
-from time import time
-
+import Constantes as c
+import math
+from Niveles_Torretas import Nivel
 class Torreta(py.sprite.Sprite):
-    def __init__(self,imagen: py.Surface, pos_x: int, pos_y: int, radio: int) -> None:
+    def __init__(self,sprite_sheets, pos_x, pos_y):
         py.sprite.Sprite.__init__(self)
-        
+        self.nivel = 1
+        self.rango = Nivel[self.nivel-1].get("rango")
+        self.cooldown = Nivel[self.nivel-1].get("cooldown")
+        self.ultimo_tiro = py.time.get_ticks()
         self.selected = False
-        self.radio: int = radio #radio de disparo en pixeles
+        self.objetivo = None
         
-        self.pos = py.Vector2(pos_x,pos_y)
+        self.pos_x = pos_x
+        self.pos_y = pos_y
+        self.x = (self.pos_x + 0.5) * c.TAMAÑO_PIXEL
+        self.y = (self.pos_y + 0.5)* c.TAMAÑO_PIXEL
         
-        self.imagen_original: py.Surface = imagen
-        self.imagen: py.Surface = imagen
-        self.rect = self.imagen.get_rect()
-        self.rect.center = self.pos
+        self.sprite_sheets = sprite_sheets
+        self.lista_animacion = self.cargar_imagenes(self.sprite_sheets[self.nivel-1])
+        self.frame_index = 0
+        self.update_time = py.time.get_ticks()
         
-        self.borde = py.mask.from_surface(imagen)
-        self.borde = self.borde.convolve(py.mask.Mask((5,5), True))
-        self.borde = self.borde.to_surface(setcolor="black",unsetcolor=(0,0,0,0))
-        self.borde_original = self.borde
-        self.b_rect = self.borde.get_rect()
-        self.b_rect.center = self.pos
+        self.angulo = 90
+        self.imagen_original = self.lista_animacion[self.frame_index]
+        self.image = py.transform.rotate(self.imagen_original,self.angulo)
+        self.rect = self.image.get_rect()
+        self.rect.center = (self.x,self.y)
         
-        self.imagen_rango: py.Surface = py.Surface((radio*2, radio*2), py.SRCALPHA)
-        self.imagen_rango.fill((0,0,0,0))
-        py.draw.circle(self.imagen_rango, (100,100,100, 50), (radio, radio), radio)
-        self.rect_rango: py.rect.Rect = self.imagen_rango.get_rect()
-        self.rect_rango.center = self.pos
+        self.rango_imagen = py.Surface((self.rango*2, self.rango*2))
+        self.rango_imagen.fill((0,0,0))
+        self.rango_imagen.set_colorkey((0,0,0))
+        py.draw.circle(self.rango_imagen,"grey100",(self.rango,self.rango),self.rango)
+        self.rango_imagen.set_alpha(100)
+        self.rango_rect = self.rango_imagen.get_rect()
+        self.rango_rect.center = self.rect.center
         
-        self.cooldown: int = 0
-        self.past_time = time()
-    def rotar(self, target: py.Vector2):
-        #Usar direccion para calcular el angulo
-        self.angulo = -(target-self.pos).as_polar()[1] -90
-        #Rotar imagen y actualizar el rectangulo
-        self.imagen = py.transform.rotate(self.imagen_original, self.angulo)
-        self.borde = py.transform.rotate(self.borde_original, self.angulo)
-        self.rect = self.imagen.get_rect()
-        self.rect.center = self.pos
-        self.b_rect = self.borde.get_rect()
-        self.b_rect.center = self.pos
-    def update(self, grupo_enemigos: py.sprite.Group) -> None:
-        delta_time = time() - self.past_time
-        if self.cooldown == 0:
-            primero = None
-            primero_desp = 0
-            for enemigo in grupo_enemigos:
-                if (enemigo.pos-self.pos).length() -10 < self.radio and primero_desp < enemigo.desplazamiento:
-                    primero = enemigo
-                    primero_desp = enemigo.desplazamiento
-            if primero:
-                self.rotar(primero.pos)
-                primero.hp -= 10
-                self.cooldown = 1000
+    def cargar_imagenes(self,sprite_sheet):
+        tamaño = sprite_sheet.get_height()
+        lista_animacion = []
+        for x in range(c.ANIMACION_TORRETAS):
+            imagen_temporal = sprite_sheet.subsurface(x*tamaño,0,tamaño,tamaño)
+            lista_animacion.append(imagen_temporal)
+        return lista_animacion
+    
+    def update(self,grupo_enemigos):
+        if self.objetivo:
+            self.empezar_animacion()
         else:
-            self.cooldown = max(0, self.cooldown - int(delta_time*1000))
-        self.past_time = time()
-    def draw(self, surface0: py.Surface, surface1: py.Surface):
+            if py.time.get_ticks() - self.ultimo_tiro > self.cooldown:
+                self.apuntar(grupo_enemigos)
+    def apuntar(self, grupo_enemigos):
+        dist_x = 0
+        dist_y = 0
+        for enemigo in grupo_enemigos:
+            dist_x = enemigo.pos[0] - self.x
+            dist_y = enemigo.pos[1] - self.y
+            dist = math.sqrt(dist_x**2 + dist_y**2)
+            if dist < self.rango:
+                self.objetivo = enemigo
+                self.angulo = math.degrees(math.atan2(-dist_y,dist_x))
+    def empezar_animacion(self):
+        self.imagen_original = self.lista_animacion[self.frame_index]
+        if py.time.get_ticks() - self.update_time > c.DELAY_ANIMACION:
+            self.update_time = py.time.get_ticks()
+            self.frame_index += 1 
+            if self.frame_index >= len(self.lista_animacion):
+                self.frame_index = 0
+                self.ultimo_tiro = py.time.get_ticks()
+                self.objetivo = None
+    
+    def subir_nivel(self):
+        self.nivel += 1
+        self.rango = Nivel[self.nivel-1].get("rango")
+        self.cooldown = Nivel[self.nivel-1].get("cooldown")
+        self.lista_animacion = self.cargar_imagenes(self.sprite_sheets[self.nivel-1])
+        self.imagen_original = self.lista_animacion[self.frame_index]
+        
+        self.rango_imagen = py.Surface((self.rango*2, self.rango*2))
+        self.rango_imagen.fill((0,0,0))
+        self.rango_imagen.set_colorkey((0,0,0))
+        py.draw.circle(self.rango_imagen,"grey100",(self.rango,self.rango),self.rango)
+        self.rango_imagen.set_alpha(100)
+        self.rango_rect = self.rango_imagen.get_rect()
+        self.rango_rect.center = self.rect.center
+    
+    def draw(self,superficie):
+        self.image = py.transform.rotate(self.imagen_original,self.angulo - 90)
+        self.rect = self.image.get_rect()
+        self.rect.center = (self.x,self.y)
+        superficie.blit(self.image,self.rect)
         if self.selected:
-            surface1.blit(self.borde, self.b_rect)
-            surface1.blit(self.imagen, self.rect)
-            surface1.blit(self.imagen_rango, self.rect_rango)
-        else:
-            surface0.blit(self.imagen, self.rect)
+            superficie.blit(self.rango_imagen,self.rango_rect)
+            self.selected = False
