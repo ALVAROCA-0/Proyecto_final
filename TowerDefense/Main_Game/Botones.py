@@ -6,7 +6,7 @@ class Boton():
         self.step_frames: int = 30 #frames que tienen que pasar para completar la animacion
         self.pos: py.Vector2 = py.Vector2(x, y)
         self.base_offy = offy
-        self.offy_step = 0
+        self.offy_step = 60
         self.image: py.Surface = imagen
         self.rect: py.Rect = self.image.get_rect()
         self.max_offy = self.rect.height - offy
