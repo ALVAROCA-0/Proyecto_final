@@ -8,6 +8,7 @@ class Torreta(py.sprite.Sprite):
         self.nivel = 1
         self.rango = Nivel[self.nivel-1].get("rango")
         self.cooldown = Nivel[self.nivel-1].get("cooldown")
+        self.daño = Nivel[self.nivel-1].get("daño")
         self.ultimo_tiro = py.time.get_ticks()
         self.selected = False
         self.objetivo = None
@@ -54,12 +55,15 @@ class Torreta(py.sprite.Sprite):
         dist_x = 0
         dist_y = 0
         for enemigo in grupo_enemigos:
-            dist_x = enemigo.pos[0] - self.x
-            dist_y = enemigo.pos[1] - self.y
-            dist = math.sqrt(dist_x**2 + dist_y**2)
-            if dist < self.rango:
-                self.objetivo = enemigo
-                self.angulo = math.degrees(math.atan2(-dist_y,dist_x))
+            if enemigo.hp > 0:
+                dist_x = enemigo.pos[0] - self.x
+                dist_y = enemigo.pos[1] - self.y
+                dist = math.sqrt(dist_x**2 + dist_y**2)
+                if dist < self.rango:
+                    self.objetivo = enemigo
+                    self.angulo = math.degrees(math.atan2(-dist_y,dist_x))
+                    self.objetivo.hp -= self.daño
+                    break
     def empezar_animacion(self):
         self.imagen_original = self.lista_animacion[self.frame_index]
         if py.time.get_ticks() - self.update_time > c.DELAY_ANIMACION:
