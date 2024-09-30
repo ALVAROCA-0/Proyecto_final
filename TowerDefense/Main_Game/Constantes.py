@@ -5,6 +5,8 @@ from Estructuras.Lineales import SingleLinkedList as SLL
 from pygame import Vector2
 from pygame.rect import Rect
 
+BOTON_PAD_X = 10
+
 vertices: SLL[Vector2] = SLL(
     Vector2(560,0),
     Vector2(560,112),

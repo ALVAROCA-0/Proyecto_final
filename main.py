@@ -21,7 +21,7 @@ mapa_imagen: py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Zona
 torreta_cursor: py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Torretas\Torreta_Cursor.png").convert_alpha()
 torreta_imagen: py.Surface = py.transform.scale(torreta_cursor, (32,32))
 enemigo_imagen: py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Enemigos\enemy_2.png").convert_alpha()
-boton_comprar_torreta_imagen:py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Botones\buy_turret.png").convert_alpha()
+boton_comprar_torreta_imagen:py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Botones\\buy_turret.png").convert_alpha()
 boton_cancelar_imagen:py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Botones\cancel.png").convert_alpha() 
 grupo_enemigos = py.sprite.Group()
 grupo_torretas = py.sprite.Group()
@@ -58,56 +58,70 @@ proc_torretas: ArrayList[Callable[[tuple[int,int]],None]] = ArrayList(
     crear_torreta1
 )
 
-placing: bool = True
 selected: Torreta | None = None
 
 layer: py.Surface = py.Surface(ventana.get_size(), py.SRCALPHA)
 enemigo = Enemigo(c.vertices, enemigo_imagen, 100)
 grupo_enemigos.add(enemigo)
 mundo = World(mapa_imagen)
-boton_torreta = Boton(c.VENTANA_ANCHO+30,120,boton_comprar_torreta_imagen)
-boton_cancelar = Boton(c.VENTANA_ANCHO+50,180,boton_cancelar_imagen)
+boton_torreta = Boton(
+    c.VENTANA_ANCHO/2-boton_comprar_torreta_imagen.get_width()/2 - c.BOTON_PAD_X,
+    -25,
+    boton_comprar_torreta_imagen,
+    10
+)
+boton_cancelar = Boton(
+    c.VENTANA_ANCHO/2+boton_cancelar_imagen.get_width()/2+c.BOTON_PAD_X,
+    -25,
+    boton_cancelar_imagen,
+    10
+)
 run = True
 while run:
+    #limpia capa superior
     layer.fill((0,0,0,0))
-    ventana.fill("grey100")
+    #re-dibuja fondo
     mundo.draw(ventana)
     # for caja in c.cajas_camino: #wireframe de cajas de collsion del camino
     #     py.draw.rect(ventana, "grey", caja, width= 1)
     # py.draw.lines(ventana,"grey0",False,c.vertices)
-    grupo_enemigos.update()
-    grupo_torretas.update(grupo_enemigos)
-    grupo_enemigos.draw(ventana)
-    if boton_torreta.draw(ventana):
-        colocar_torretas = True
-    if colocar_torretas:
-        cursor_rect = torreta_imagen.get_rect()
-        cursor_pos = py.mouse.get_pos()
-        cursor_rect.center = cursor_pos
-        if cursor_pos[0] <= c.VENTANA_ANCHO:
-            ventana.blit(torreta_imagen,cursor_rect)
-        if boton_cancelar.draw(ventana):
-            colocar_torretas = False
-    for torreta in grupo_torretas: torreta.draw(ventana, layer)
-    ventana.blit(layer, layer.get_rect())
+    #deteccion de eventos -------------------------------------------
+    posicion_mouse = py.mouse.get_pos()
     if py.event.get(py.QUIT):
        run = False
     for event in py.event.get(py.MOUSEBUTTONDOWN):
         if event.button == 1:
-            posicion_mouse = py.mouse.get_pos()
-            if placing: 
+            if boton_cancelar.on_click(event, posicion_mouse): colocar_torretas = False
+            if colocar_torretas:
                 if posicion_mouse[0] < c.VENTANA_ANCHO and posicion_mouse[1] < c.VENTANA_ALTURA:
                     crear_torreta1(posicion_mouse)
                     colocar_torretas = False
-            else:
+            else: #selecciona la torreta
                 ocu_hash = grid_a_hash(*map(lambda x: x//c.TAMAÑO_PIXEL,posicion_mouse))
                 if selected: selected.selected = False
                 if isinstance(espacios_ocupados[ocu_hash], Torreta):
                     selected = espacios_ocupados[ocu_hash]
-                    selected.selected = True     
-        elif event.button == 3:
-            placing = not placing     
-    # for event in py.event.get(py.MOUSEMOTION):
+                    selected.selected = True
+            #el checkeo debe ser despues o si no pone la torreta de una vez
+            if boton_torreta.on_click(event, posicion_mouse): colocar_torretas = True
+    #update de entidades en el mapa
+    grupo_enemigos.update()
+    grupo_torretas.update(grupo_enemigos)
+    boton_torreta.update(posicion_mouse)
+    boton_cancelar.update(posicion_mouse)
+    #dibujar objetos ------------------------------------------------
+    grupo_enemigos.draw(ventana)
+    boton_torreta.draw(ventana)
+    if colocar_torretas:
+        if posicion_mouse[0] <= c.VENTANA_ANCHO: # dibuja torreta a poner
+            cursor_rect = torreta_imagen.get_rect()
+            cursor_pos = py.Vector2(posicion_mouse)//c.TAMAÑO_PIXEL
+            if not espacios_ocupados[grid_a_hash(*cursor_pos)]:
+                cursor_rect.center = (cursor_pos+py.Vector2(0.5,0.5))*c.TAMAÑO_PIXEL
+                ventana.blit(torreta_imagen,cursor_rect)
+        boton_cancelar.draw(ventana)
+    for torreta in grupo_torretas: torreta.draw(ventana, layer)
+    ventana.blit(layer, layer.get_rect())
     py.display.update()
     frecuencia.tick(c.FPS)
 
