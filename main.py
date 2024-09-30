@@ -81,6 +81,11 @@ while run:
     if boton_torreta.draw(ventana):
         colocar_torretas = True
     if colocar_torretas:
+        cursor_rect = torreta_imagen.get_rect()
+        cursor_pos = py.mouse.get_pos()
+        cursor_rect.center = cursor_pos
+        if cursor_pos[0] <= c.VENTANA_ANCHO:
+            ventana.blit(torreta_imagen,cursor_rect)
         if boton_cancelar.draw(ventana):
             colocar_torretas = False
     for torreta in grupo_torretas: torreta.draw(ventana, layer)
