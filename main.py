@@ -4,12 +4,13 @@ from TowerDefense.Main_Game import Constantes as c
 from Estructuras.Lineales import SingleLinkedList as SLL, ArrayList
 from Estructuras.Otras import HashmapProbing as HP
 from TowerDefense.Main_Game.Torreta import Torreta
+from TowerDefense.Main_Game.Botones import Boton
 from TowerDefense.Main_Game.Mundo import World
 from typing import Callable
 from os.path import dirname
 
 py.init()
-
+colocar_torretas = False
 #para importar correctamente los archivos sin importar la posicion en conslola
 path: str = dirname(__file__)
 frecuencia = py.time.Clock()
@@ -20,6 +21,8 @@ mapa_imagen: py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Zona
 torreta_cursor: py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Torretas\Torreta_Cursor.png").convert_alpha()
 torreta_imagen: py.Surface = py.transform.scale(torreta_cursor, (32,32))
 enemigo_imagen: py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Enemigos\enemy_2.png").convert_alpha()
+boton_comprar_torreta_imagen:py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Botones\buy_turret.png").convert_alpha()
+boton_cancelar_imagen:py.Surface = py.image.load(path+"\TowerDefense\Assets\Imagenes\Botones\cancel.png").convert_alpha() 
 grupo_enemigos = py.sprite.Group()
 grupo_torretas = py.sprite.Group()
 
@@ -62,6 +65,8 @@ layer: py.Surface = py.Surface(ventana.get_size(), py.SRCALPHA)
 enemigo = Enemigo(c.vertices, enemigo_imagen, 100)
 grupo_enemigos.add(enemigo)
 mundo = World(mapa_imagen)
+boton_torreta = Boton(c.VENTANA_ANCHO+30,120,boton_comprar_torreta_imagen)
+boton_cancelar = Boton(c.VENTANA_ANCHO+50,180,boton_cancelar_imagen)
 run = True
 while run:
     layer.fill((0,0,0,0))
@@ -73,7 +78,11 @@ while run:
     grupo_enemigos.update()
     grupo_torretas.update(grupo_enemigos)
     grupo_enemigos.draw(ventana)
-    
+    if boton_torreta.draw(ventana):
+        colocar_torretas = True
+    if colocar_torretas:
+        if boton_cancelar.draw(ventana):
+            colocar_torretas = False
     for torreta in grupo_torretas: torreta.draw(ventana, layer)
     ventana.blit(layer, layer.get_rect())
     if py.event.get(py.QUIT):
@@ -84,6 +93,7 @@ while run:
             if placing: 
                 if posicion_mouse[0] < c.VENTANA_ANCHO and posicion_mouse[1] < c.VENTANA_ALTURA:
                     crear_torreta1(posicion_mouse)
+                    colocar_torretas = False
             else:
                 ocu_hash = grid_a_hash(*map(lambda x: x//c.TAMAÑO_PIXEL,posicion_mouse))
                 if selected: selected.selected = False
