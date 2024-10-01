@@ -39,8 +39,9 @@ class Torreta(py.sprite.Sprite):
         
     def cargar_imagenes(self,sprite_sheet):
         tamaño = sprite_sheet.get_height()
+        animacion = sprite_sheet.get_width() // tamaño
         lista_animacion = []
-        for x in range(c.ANIMACION_TORRETAS):
+        for x in range(animacion):
             imagen_temporal = sprite_sheet.subsurface(x*tamaño,0,tamaño,tamaño)
             lista_animacion.append(imagen_temporal)
         return lista_animacion
