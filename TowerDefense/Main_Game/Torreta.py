@@ -1,29 +1,26 @@
 import pygame as py
-import Constantes as c
-import math
-from Niveles_Torretas import Nivel
+from . import Constantes as c
+from .Niveles_Torretas import Nivel
 class Torreta(py.sprite.Sprite):
     def __init__(self,sprite_sheets, pos_x, pos_y):
         py.sprite.Sprite.__init__(self)
         self.nivel = 1
-        self.rango = Nivel[self.nivel-1].get("rango")
-        self.cooldown = Nivel[self.nivel-1].get("cooldown")
+        self.rango = Nivel[self.nivel-1]["rango"]
+        self.cooldown = Nivel[self.nivel-1]["cooldown"]
         self.daño = Nivel[self.nivel-1].get("daño")
         self.ultimo_tiro = py.time.get_ticks()
-        self.selected = False
+        self.seleccionado = False
         self.objetivo = None
         
-        self.pos_x = pos_x
-        self.pos_y = pos_y
-        self.x = (self.pos_x + 0.5) * c.TAMAÑO_PIXEL
-        self.y = (self.pos_y + 0.5)* c.TAMAÑO_PIXEL
+        self.x = pos_x
+        self.y = pos_y
         
         self.sprite_sheets = sprite_sheets
         self.lista_animacion = self.cargar_imagenes(self.sprite_sheets[self.nivel-1])
         self.frame_index = 0
         self.update_time = py.time.get_ticks()
         
-        self.angulo = 90
+        self.angulo = 0
         self.imagen_original = self.lista_animacion[self.frame_index]
         self.image = py.transform.rotate(self.imagen_original,self.angulo)
         self.rect = self.image.get_rect()
@@ -52,18 +49,14 @@ class Torreta(py.sprite.Sprite):
             if py.time.get_ticks() - self.ultimo_tiro > self.cooldown:
                 self.apuntar(grupo_enemigos)
     def apuntar(self, grupo_enemigos):
-        dist_x = 0
-        dist_y = 0
         for enemigo in grupo_enemigos:
-            if enemigo.hp > 0:
-                dist_x = enemigo.pos[0] - self.x
-                dist_y = enemigo.pos[1] - self.y
-                dist = math.sqrt(dist_x**2 + dist_y**2)
-                if dist < self.rango:
-                    self.objetivo = enemigo
-                    self.angulo = math.degrees(math.atan2(-dist_y,dist_x))
-                    self.objetivo.hp -= self.daño
-                    break
+            dist = py.Vector2(*enemigo.pos)
+            dist -= py.Vector2(self.x, self.y)
+            if dist.length()-5 < self.rango: #-5 por un pequeño radio del enemigo
+                self.objetivo = enemigo
+                self.angulo = -dist.as_polar()[1] - 90
+                enemigo.golpe(self.daño)
+                break
     def empezar_animacion(self):
         self.imagen_original = self.lista_animacion[self.frame_index]
         if py.time.get_ticks() - self.update_time > c.DELAY_ANIMACION:
@@ -89,11 +82,12 @@ class Torreta(py.sprite.Sprite):
         self.rango_rect = self.rango_imagen.get_rect()
         self.rango_rect.center = self.rect.center
     
-    def draw(self,superficie):
-        self.image = py.transform.rotate(self.imagen_original,self.angulo - 90)
+    def draw(self, superficie: py.Surface, capa: py.Surface):
+        self.image = py.transform.rotate(self.imagen_original,self.angulo)
         self.rect = self.image.get_rect()
         self.rect.center = (self.x,self.y)
-        superficie.blit(self.image,self.rect)
-        if self.selected:
-            superficie.blit(self.rango_imagen,self.rango_rect)
-            self.selected = False
+        if self.seleccionado:
+            capa.blit(self.rango_imagen,self.rango_rect)
+            capa.blit(self.image,self.rect)
+        else:
+            superficie.blit(self.image,self.rect)

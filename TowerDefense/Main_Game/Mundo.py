@@ -1,6 +1,6 @@
 import random
-from Enemigos_Datos import Enemigo_Spwan
-import Constantes as c
+from .Enemigos_Datos import Enemigo_Spwan
+from . import Constantes as c
 
 class World():
     def __init__(self, imagen_mapa):

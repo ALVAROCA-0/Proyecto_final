@@ -7,15 +7,10 @@ class Boton():
         self.rect.topleft = (x,y)
         self.clicked = False
     
-    def draw(self,surface):
-        accion = False
-        posicion = py.mouse.get_pos()
-        
-        if self.rect.collidepoint(posicion):
-            if py.mouse.get_pressed()[0] == 1 and self.clicked == False:
-                accion = True
-                self.clicked = True
-        if py.mouse.get_pressed()[0] == 0:  
-            self.clicked = False
-        surface.blit(self.image,self.rect)
-        return accion
+    def on_click(self, evento: py.event.Event, mouse_pos: tuple[int,int]) -> bool:
+        if self.rect.collidepoint(mouse_pos):
+            return True
+        return False
+    
+    def draw(self, surface: py.Surface):
+        surface.blit(self.image, self.rect)
