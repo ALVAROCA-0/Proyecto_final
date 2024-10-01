@@ -7,6 +7,8 @@ from Torreta import Torreta
 from Mundo import World
 from Botones import Boton
 from Enemigos_Datos import Enemigo_Spwan
+import ArbolBinario as AB
+import pygame.surfarray as surfarray
 
 py.init()
 game_over = False
@@ -14,9 +16,15 @@ game = 0 # -1 pierde, 1 gana
 ultimo_enemigo_creado = py.time.get_ticks()
 colocar_torretas = False
 torreta_seleccionada = None
+torreta_seleccionada_arbol = None
+torreta_seleccionada_imagen_izquierda = None
+torreta_seleccionada_imagen_derecha = None
 inicio_nivel = False
 fuente = py.font.Font(None, 36)
 frecuencia = py.time.Clock()
+boton_subir_nivel_camino_1 = None
+boton_subir_nivel_camino_2 = None
+botones_mejora_visibles = False
 
 ventana = py.display.set_mode((c.VENTANA_ANCHO + c.PANEL_CONTIGUO,c.VENTANA_ALTURA))
 py.display  .set_caption("Tower Defense")
@@ -40,7 +48,7 @@ def crear_torreta(posicion_mouse):
             if (mouse_tile_x, mouse_tile_y) == (torreta.pos_x, torreta.pos_y):
                 espacio_libre = False
         if espacio_libre:
-            nueva_torreta = Torreta(spritesheets_torretas,mouse_tile_x,mouse_tile_y)
+            nueva_torreta = Torreta(spritesheets_torretas,spritesheets_torretas[0],arbol_spritesheets_torreta,mouse_tile_x,mouse_tile_y)
             grupo_torretas.add(nueva_torreta)
             torreta_colocada = True
             mundo.dinero -= c.COSTO_TORRETA
@@ -55,9 +63,14 @@ def seleccionar_torreta(posicion_mouse):
 
 mapa_imagen: py.Surface = py.image.load("Assets/Imagenes/Zona/Mapa1.png").convert_alpha()
 spritesheets_torretas = []
+primeros_spritesheets_torretas = []
 for x in range(1,c.NIVELES_TORRETAS+1):
     torreta_spritesheet: py.Surface = py.image.load(f"Assets/Imagenes/Torretas/Animacion_Torreta_{x}.png").convert_alpha()
     spritesheets_torretas.append(torreta_spritesheet)
+    primera_imagen = AB.obtener_primera_imagen(torreta_spritesheet)
+    primeros_spritesheets_torretas.append(primera_imagen)
+arbol_spritesheets_torreta = AB.construir_arbol_binario_completo(spritesheets_torretas)
+AB.asignar_niveles_en_orden(arbol_spritesheets_torreta)
 torreta_cursor: py.Surface = py.image.load("Assets/Imagenes/Torretas/Torreta_Cursor.png").convert_alpha()
 enemigos_imagenes = {
     "debil": py.image.load("Assets/Imagenes/Enemigos/enemy_1.png").convert_alpha(),
@@ -100,7 +113,7 @@ while run:
         grupo_enemigos.update(mundo)
         grupo_torretas.update(grupo_enemigos)
         if torreta_seleccionada:
-                torreta_seleccionada.selected = True
+            torreta_seleccionada.selected = True
     
     grupo_enemigos.draw(ventana)
     for torreta in grupo_torretas:
@@ -144,11 +157,34 @@ while run:
                 colocar_torretas = False
                 
         if torreta_seleccionada:
-            if torreta_seleccionada.nivel < c.NIVELES_TORRETAS:
+            if torreta_seleccionada.nivel < c.SUBIR_TORRETA:
                 if boton_subir_nivel.draw(ventana):
-                    if mundo.dinero >= c.MEJORAR_TORRETA:
-                        torreta_seleccionada.subir_nivel()
+                    for i in range(len(spritesheets_torretas)):
+                        array1 = surfarray.array3d(primeros_spritesheets_torretas[i])
+                        array2 = surfarray.array3d(torreta_seleccionada.imagen_original)
+                        igualdad = (array1 == array2).all()
+                        if igualdad:
+                            torreta_seleccionada_arbol = AB.encontrar_nodo(arbol_spritesheets_torreta,spritesheets_torretas[i])
+                            torreta_seleccionada_imagen_izquierda = AB.obtener_primera_imagen(torreta_seleccionada_arbol.izquierda.valor)
+                            torreta_seleccionada_imagen_derecha = AB.obtener_primera_imagen(torreta_seleccionada_arbol.derecha.valor)
+                    if not botones_mejora_visibles:
+                        boton_subir_nivel_camino_1 = Boton(c.VENTANA_ANCHO + 5, 400, torreta_seleccionada_imagen_izquierda)
+                        boton_subir_nivel_camino_2 = Boton(c.VENTANA_ANCHO + 100, 400, torreta_seleccionada_imagen_derecha)
+                        botones_mejora_visibles = True
+            
+            if botones_mejora_visibles:
+                click_camino_1 = boton_subir_nivel_camino_1.draw(ventana)
+                click_camino_2 = boton_subir_nivel_camino_2.draw(ventana)
+                if mundo.dinero >= c.MEJORAR_TORRETA:
+                    if click_camino_1:
+                        torreta_seleccionada.subir_nivel(torreta_seleccionada_arbol,torreta_seleccionada_arbol.izquierda)
                         mundo.dinero -= c.MEJORAR_TORRETA
+                        botones_mejora_visibles = False
+                        
+                    if click_camino_2:
+                        torreta_seleccionada.subir_nivel(torreta_seleccionada_arbol,torreta_seleccionada_arbol.derecha)
+                        mundo.dinero -= c.MEJORAR_TORRETA
+                        botones_mejora_visibles = False
     else:
         py.draw.rect(ventana,"dodgerblue",(200,200,400,200), border_radius= 30)
         if game == -1:
@@ -179,8 +215,10 @@ while run:
                             colocar_torretas = False
                 else:
                     torreta_seleccionada = seleccionar_torreta(posicion_mouse)
+                    botones_mejora_visibles = False
+                    boton_subir_nivel_camino_1 = None
+                    boton_subir_nivel_camino_2 = None
     py.display.update()
     frecuencia.tick(c.FPS)
 
-py.quit()
 py.quit()

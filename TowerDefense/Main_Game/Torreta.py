@@ -2,13 +2,16 @@ import pygame as py
 import Constantes as c
 import math
 from Niveles_Torretas import Nivel
+import ArbolBinario as AB
 class Torreta(py.sprite.Sprite):
-    def __init__(self,sprite_sheets, pos_x, pos_y):
+    def __init__(self,sprite_sheets,nodo,arbol, pos_x, pos_y):
         py.sprite.Sprite.__init__(self)
-        self.nivel = 1
-        self.rango = Nivel[self.nivel-1].get("rango")
-        self.cooldown = Nivel[self.nivel-1].get("cooldown")
-        self.daño = Nivel[self.nivel-1].get("daño")
+        self.arbol = arbol
+        self.nodo = AB.encontrar_nodo(self.arbol,nodo)
+        self.nivel = self.nodo.nivel
+        self.rango = Nivel[self.nivel].get("rango")
+        self.cooldown = Nivel[self.nivel].get("cooldown")
+        self.daño = Nivel[self.nivel].get("daño")
         self.ultimo_tiro = py.time.get_ticks()
         self.selected = False
         self.objetivo = None
@@ -39,8 +42,9 @@ class Torreta(py.sprite.Sprite):
         
     def cargar_imagenes(self,sprite_sheet):
         tamaño = sprite_sheet.get_height()
+        animacion = sprite_sheet.get_width() // tamaño
         lista_animacion = []
-        for x in range(c.ANIMACION_TORRETAS):
+        for x in range(animacion):
             imagen_temporal = sprite_sheet.subsurface(x*tamaño,0,tamaño,tamaño)
             lista_animacion.append(imagen_temporal)
         return lista_animacion
@@ -74,11 +78,13 @@ class Torreta(py.sprite.Sprite):
                 self.ultimo_tiro = py.time.get_ticks()
                 self.objetivo = None
     
-    def subir_nivel(self):
-        self.nivel += 1
-        self.rango = Nivel[self.nivel-1].get("rango")
-        self.cooldown = Nivel[self.nivel-1].get("cooldown")
-        self.lista_animacion = self.cargar_imagenes(self.sprite_sheets[self.nivel-1])
+    def subir_nivel(self,nodo,hijo):
+        self.nivel = hijo.nivel
+        self.nodo = nodo
+        self.daño = Nivel[self.nivel].get("daño")
+        self.rango = Nivel[self.nivel].get("rango")
+        self.cooldown = Nivel[self.nivel].get("cooldown")
+        self.lista_animacion = self.cargar_imagenes(hijo.valor)
         self.imagen_original = self.lista_animacion[self.frame_index]
         
         self.rango_imagen = py.Surface((self.rango*2, self.rango*2))

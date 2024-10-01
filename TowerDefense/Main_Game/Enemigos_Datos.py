@@ -46,7 +46,7 @@ Enemigo_Spwan = [
     "elite":0},
     #10
     {"debil": 0,
-    "medio": 100,
+    "medio": 50,
     "fuerte": 0,
     "elite":0},
     #11

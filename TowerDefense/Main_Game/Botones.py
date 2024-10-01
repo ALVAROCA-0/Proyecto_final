@@ -15,7 +15,7 @@ class Boton():
             if py.mouse.get_pressed()[0] == 1 and self.clicked == False:
                 accion = True
                 self.clicked = True
-        if py.mouse.get_pressed()[0] == 0:  
+        if py.mouse.get_pressed()[0] == 0:
             self.clicked = False
         surface.blit(self.image,self.rect)
         return accion
