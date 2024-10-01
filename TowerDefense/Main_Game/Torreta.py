@@ -1,13 +1,16 @@
 import pygame as py
 from . import Constantes as c
 from .Niveles_Torretas import Nivel
+import Estructuras.NoLineales import ArbolBinario as AB
 class Torreta(py.sprite.Sprite):
-    def __init__(self,sprite_sheets, pos_x, pos_y):
+    def __init__(self,sprite_sheets,nodo, arbol, pos_x, pos_y):
         py.sprite.Sprite.__init__(self)
-        self.nivel = 1
-        self.rango = Nivel[self.nivel-1]["rango"]
-        self.cooldown = Nivel[self.nivel-1]["cooldown"]
-        self.daño = Nivel[self.nivel-1].get("daño")
+        self.arbol = arbol
+        self.nodo = AB.encontrar_nodo(self.arbol,nodo)
+        self.nivel = self.nodo.nivel
+        self.rango = Nivel[self.nivel].get("rango")
+        self.cooldown = Nivel[self.nivel].get("cooldown")
+        self.daño = Nivel[self.nivel].get("daño")
         self.ultimo_tiro = py.time.get_ticks()
         self.seleccionado = False
         self.objetivo = None
@@ -67,11 +70,13 @@ class Torreta(py.sprite.Sprite):
                 self.ultimo_tiro = py.time.get_ticks()
                 self.objetivo = None
     
-    def subir_nivel(self):
-        self.nivel += 1
-        self.rango = Nivel[self.nivel-1].get("rango")
-        self.cooldown = Nivel[self.nivel-1].get("cooldown")
-        self.lista_animacion = self.cargar_imagenes(self.sprite_sheets[self.nivel-1])
+    def subir_nivel(self,nodo,hijo):
+        self.nivel = hijo.nivel
+        self.nodo = nodo
+        self.daño = Nivel[self.nivel].get("daño")
+        self.rango = Nivel[self.nivel].get("rango")
+        self.cooldown = Nivel[self.nivel].get("cooldown")
+        self.lista_animacion = self.cargar_imagenes(hijo.valor)
         self.imagen_original = self.lista_animacion[self.frame_index]
         
         self.rango_imagen = py.Surface((self.rango*2, self.rango*2))
