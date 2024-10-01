@@ -5,6 +5,7 @@ from typing import Callable
 #estructuras de datos
 from Estructuras.Lineales import SingleLinkedList as SLL
 from Estructuras.Otras import HashmapProbing as HP
+from Estructuras.NoLineales import ArbolBinario as AB
 #modulos tower defense
 from TowerDefense.Main_Game.Enemigos import Enemigo
 from TowerDefense.Main_Game import Constantes as c
@@ -16,12 +17,18 @@ from TowerDefense.Main_Game.Enemigos_Datos import Enemigo_Spwan
 py.init()
 #para importar correctamente los archivos sin importar la posicion en conslola
 path: str = dirname(__file__)
-gana = 0
+gana = 0 #-1 pierde, 1 gana
 ultimo_enemigo_creado = py.time.get_ticks()
-game_over = False
+game_over = False 
 colocar_torretas = False
 inicio_nivel = False
 torreta_seleccionada: Torreta|None = None
+torreta_seleccionada_arbol = None
+torreta_seleccionada_imagen_izquierda = None
+torreta_seleccionada_imagen_derecha = None
+boton_subir_nivel_camino_1 = None
+boton_subir_nivel_camino_2 = None
+botones_mejora_visibles = False
 frecuencia = py.time.Clock()
 ventana = py.display.set_mode((c.VENTANA_ANCHO + c.PANEL_CONTIGUO,c.VENTANA_ALTURA))
 py.display.set_caption("Tower Defense")
@@ -36,9 +43,14 @@ boton_subir_nivel_torreta_imagen:py.Surface = py.image.load(path+"\TowerDefense\
 boton_empezar_nivel_imagen:py.Surface       = py.image.load(path+"\TowerDefense\Assets/Imagenes/Botones/begin.png").convert_alpha()
 boton_reiniciar_juego_imagen:py.Surface     = py.image.load(path+"\TowerDefense\Assets/Imagenes/Botones/restart.png").convert_alpha()
 spritesheets_torretas = SLL()
+primeros_spritesheets_torretas = []
 for x in range(1,c.NIVELES_TORRETAS+1):
     torreta_spritesheet: py.Surface = py.image.load(path+f"\TowerDefense\Assets/Imagenes/Torretas/Animacion_Torreta_{x}.png").convert_alpha()
     spritesheets_torretas.push_back(torreta_spritesheet)
+    primera_imagen = AB.obtener_primera_imagen(torreta_spritesheet)
+    primeros_spritesheets_torretas.append(primera_imagen)
+arbol_spritesheets_torreta = AB.construir_arbol_binario_completo(spritesheets_torretas)
+AB.asignar_niveles_en_orden(arbol_spritesheets_torreta)
 enemigos_imagenes = {
     "debil": py.image.load(path+"\TowerDefense\Assets/Imagenes/Enemigos/enemy_1.png").convert_alpha(),
     "medio": py.image.load(path+"\TowerDefense\Assets/Imagenes/Enemigos/enemy_2.png").convert_alpha(),
@@ -99,7 +111,7 @@ while run:
     for caja in c.cajas_camino: #wireframe de cajas de collsion del camino
         py.draw.rect(ventana, "grey", caja, width= 1)
     # py.draw.lines(ventana,"grey0",False,c.vertices)
-    #
+    # 
     if not game_over:
         if mundo.vida_jugador <= 0:
             game_over = True
@@ -147,6 +159,34 @@ while run:
                 if (boton_subir_nivel.on_click(event, posicion_mouse) and #si se presiono el boton
                     torreta_seleccionada.nivel < c.NIVELES_TORRETAS and   #y se puede mejorar
                     mundo.dinero >= c.MEJORAR_TORRETA):                   #y se tiene el dinero
+                    # Inicio Botones para elegir camino
+                    for i in range(len(spritesheets_torretas)):
+                        array1 = surfarray.array3d(primeros_spritesheets_torretas[i])
+                        array2 = surfarray.array3d(torreta_seleccionada.imagen_original)
+                        igualdad = (array1 == array2).all()
+                        if igualdad:
+                            torreta_seleccionada_arbol = AB.encontrar_nodo(arbol_spritesheets_torreta,spritesheets_torretas[i])
+                            torreta_seleccionada_imagen_izquierda = AB.obtener_primera_imagen(torreta_seleccionada_arbol.izquierda.valor)
+                            torreta_seleccionada_imagen_derecha = AB.obtener_primera_imagen(torreta_seleccionada_arbol.derecha.valor)
+                    if not botones_mejora_visibles:
+                        boton_subir_nivel_camino_1 = Boton(c.VENTANA_ANCHO + 5, 400, torreta_seleccionada_imagen_izquierda)
+                        boton_subir_nivel_camino_2 = Boton(c.VENTANA_ANCHO + 100, 400, torreta_seleccionada_imagen_derecha)
+                        botones_mejora_visibles = True
+            
+                if botones_mejora_visibles:
+                    click_camino_1 = boton_subir_nivel_camino_1.draw(ventana)
+                    click_camino_2 = boton_subir_nivel_camino_2.draw(ventana)
+                    if mundo.dinero >= c.MEJORAR_TORRETA:
+                        if click_camino_1:
+                            torreta_seleccionada.subir_nivel(torreta_seleccionada_arbol,torreta_seleccionada_arbol.izquierda)
+                            mundo.dinero -= c.MEJORAR_TORRETA
+                            botones_mejora_visibles = False
+                            
+                        if click_camino_2:
+                            torreta_seleccionada.subir_nivel(torreta_seleccionada_arbol,torreta_seleccionada_arbol.derecha)
+                            mundo.dinero -= c.MEJORAR_TORRETA
+                            botones_mejora_visibles = False
+                     # Final Botones para elegir camino
                     torreta_seleccionada.subir_nivel()
                     mundo.dinero -= c.MEJORAR_TORRETA
                 else:
