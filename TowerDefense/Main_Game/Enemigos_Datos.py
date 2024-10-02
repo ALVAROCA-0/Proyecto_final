@@ -77,8 +77,8 @@ Enemigo_Spwan = [
 ]
 
 Datos_Enemigos = {
-    "debil":  {"hp": 10, "velocidad":2,"dinero":25},
-    "medio":  {"hp": 15, "velocidad":3,"dinero":50},
-    "fuerte": {"hp": 20, "velocidad":4,"dinero":100},
-    "elite":  {"hp": 30, "velocidad":6,"dinero":125}
+    "debil":  {"hp": 10, "velocidad":4,"dinero":5},
+    "medio":  {"hp": 15, "velocidad":6,"dinero":10},
+    "fuerte": {"hp": 20, "velocidad":8,"dinero":15},
+    "elite":  {"hp": 30, "velocidad":10,"dinero":20}
 }

@@ -72,14 +72,14 @@ for key in range(c.COLUMNAS*c.FILAS):
         if ocupado: break
     espacios_ocupados.insert(key, ocupado)
 
-def dibujar_texto(texto,fuente,color,x,y):
+def dibujar_texto(texto: str,fuente: py.font.Font,color: py.Color, x: int, y: int):
     img = fuente.render(texto,True,color)
     ventana.blit(img, (x,y))
 
 def grid_a_hash(columna: int, fila: int) -> int:
     return fila*c.COLUMNAS + columna
 
-def crear_torreta(pos: tuple[int, int]) -> None:
+def crear_torreta(pos: py.Vector2[int, int]) -> None:
     new_pos: py.Vector2 = py.Vector2(*pos)
     new_pos //= c.TAMAÑO_PIXEL
     int_hash: int = grid_a_hash(*new_pos)
@@ -141,7 +141,7 @@ while run:
             dibujar_texto("You Win!!!", fuente_largo,"grey0", 315,230)
                 
     #deteccion de eventos -------------------------------------------
-    posicion_mouse = py.mouse.get_pos()
+    posicion_mouse = py.Vector2(*py.mouse.get_pos())
     if py.event.get(py.QUIT):
        run = False
     for event in py.event.get(py.MOUSEBUTTONDOWN):

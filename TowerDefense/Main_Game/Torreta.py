@@ -1,13 +1,14 @@
 import pygame as py
 from . import Constantes as c
 from .Niveles_Torretas import niveles_arbol
+from Estructuras.Lineales import ArrayList
 
 class Torreta(py.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         py.sprite.Sprite.__init__(self)
         self.arbol = niveles_arbol
-        self.nivel = 0
-        valor_nodo = self.arbol.get_root()
+        self.nivel: int = 0
+        valor_nodo: dict = self.arbol.get_root()
         self.rango = valor_nodo["rango"]
         self.cooldown = valor_nodo["cooldown"]
         self.daño = valor_nodo["daño"]
@@ -19,7 +20,7 @@ class Torreta(py.sprite.Sprite):
         self.y = pos_y
         self.sprite_sheets: py.Surface = py.image.load(valor_nodo["imagen"])
         self.sprite_sheets.set_alpha()
-        self.lista_animacion = self.cargar_imagenes(self.sprite_sheets)
+        self.lista_animacion: ArrayList = self.cargar_imagenes(self.sprite_sheets)
         self.frame_index = 0
         self.update_time = py.time.get_ticks()
         
@@ -37,13 +38,13 @@ class Torreta(py.sprite.Sprite):
         self.rango_rect = self.rango_imagen.get_rect()
         self.rango_rect.center = self.rect.center
         
-    def cargar_imagenes(self,sprite_sheet):
-        tamaño = sprite_sheet.get_height()
-        animacion = sprite_sheet.get_width() // tamaño
-        lista_animacion = []
+    def cargar_imagenes(self, sprite_sheet: py.Surface):
+        tamaño: int = sprite_sheet.get_height()
+        animacion: int = sprite_sheet.get_width() // tamaño
+        lista_animacion: ArrayList[py.Surface] = ArrayList()
         for x in range(animacion):
             imagen_temporal = sprite_sheet.subsurface(x*tamaño,0,tamaño,tamaño)
-            lista_animacion.append(imagen_temporal)
+            lista_animacion.push_back(imagen_temporal)
         return lista_animacion
     
     def update(self,grupo_enemigos):
