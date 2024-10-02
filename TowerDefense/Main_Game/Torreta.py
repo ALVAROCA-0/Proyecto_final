@@ -1,25 +1,25 @@
 import pygame as py
 from . import Constantes as c
-from .Niveles_Torretas import Nivel
-import Estructuras.NoLineales import ArbolBinario as AB
+from .Niveles_Torretas import niveles_arbol
+
 class Torreta(py.sprite.Sprite):
-    def __init__(self,sprite_sheets,nodo, arbol, pos_x, pos_y):
+    def __init__(self, pos_x, pos_y):
         py.sprite.Sprite.__init__(self)
-        self.arbol = arbol
-        self.nodo = AB.encontrar_nodo(self.arbol,nodo)
-        self.nivel = self.nodo.nivel
-        self.rango = Nivel[self.nivel].get("rango")
-        self.cooldown = Nivel[self.nivel].get("cooldown")
-        self.daño = Nivel[self.nivel].get("daño")
+        self.arbol = niveles_arbol
+        self.nivel = 0
+        valor_nodo = self.arbol.get_root()
+        self.rango = valor_nodo["rango"]
+        self.cooldown = valor_nodo["cooldown"]
+        self.daño = valor_nodo["daño"]
         self.ultimo_tiro = py.time.get_ticks()
         self.seleccionado = False
         self.objetivo = None
         
         self.x = pos_x
         self.y = pos_y
-        
-        self.sprite_sheets = sprite_sheets
-        self.lista_animacion = self.cargar_imagenes(self.sprite_sheets[self.nivel-1])
+        self.sprite_sheets: py.Surface = py.image.load(valor_nodo["imagen"])
+        self.sprite_sheets.set_alpha()
+        self.lista_animacion = self.cargar_imagenes(self.sprite_sheets)
         self.frame_index = 0
         self.update_time = py.time.get_ticks()
         
@@ -71,13 +71,19 @@ class Torreta(py.sprite.Sprite):
                 self.ultimo_tiro = py.time.get_ticks()
                 self.objetivo = None
     
-    def subir_nivel(self,nodo,hijo):
-        self.nivel = hijo.nivel
-        self.nodo = nodo
-        self.daño = Nivel[self.nivel].get("daño")
-        self.rango = Nivel[self.nivel].get("rango")
-        self.cooldown = Nivel[self.nivel].get("cooldown")
-        self.lista_animacion = self.cargar_imagenes(hijo.valor)
+    def subir_nivel(self, derecha: bool):
+        self.nivel += 1
+        if derecha:
+            self.arbol = self.arbol.derecha()
+        else:
+            self.arbol = self.arbol.izquierda()
+        valor_nodo = self.arbol.get_root()
+        self.rango = valor_nodo["rango"]
+        self.cooldown = valor_nodo["cooldown"]
+        self.daño = valor_nodo["daño"]
+        self.sprite_sheets: py.Surface = py.image.load(valor_nodo["imagen"])
+        self.sprite_sheets.set_alpha()
+        self.lista_animacion = self.cargar_imagenes(self.sprite_sheets)
         self.imagen_original = self.lista_animacion[self.frame_index]
         
         self.rango_imagen = py.Surface((self.rango*2, self.rango*2))

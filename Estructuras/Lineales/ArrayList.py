@@ -126,6 +126,8 @@ class ArrayList(Iterable[T]):
         return self.__iterator(self.__arr, self.__size)
     def __bool__(self) -> bool:
         return self.is_empty()
+    def __len__(self) -> int:
+        return self.__size
     class __iterator(Iterator[T]):
         def __init__(self, arr: Array, size: int, start:int = 0) -> None:
             self.arr:Array[T] = arr
